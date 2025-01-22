@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest  # Use the latest MySQL image
+    container_name: mysql-container  # Name of the container
+    #    restart: always  # Automatically restart the container if it stops
+    environment:
+      MYSQL_ROOT_PASSWORD: password  # Root user password
+      MYSQL_DATABASE: auth  # Name of the default database
+    ports:
+      - "3306:3306"  # Map the MySQL default port to the host
+    volumes:
+      - mysql_data:/var/lib/mysql  # Persist MySQL data
+    networks:
+      - app_network  # Define the network
+
+  redis:
+    image: redis:latest  # Use the latest Redis image
+    container_name: redis-container  # Name of the Redis container
+    ports:
+      - "6379:6379"  # Map the Redis default port to the host
+    networks:
+      - app_network  # Define the network
+
+volumes:
+  mysql_data:
+    driver: local  # Use a local volume for data persistence
+
+networks:
+  app_network:
+    driver: bridge

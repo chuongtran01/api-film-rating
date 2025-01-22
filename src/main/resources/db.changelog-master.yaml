@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - include:
+      file: "db/create-user.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/create-role.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/create-refresh-token.sql"
+      relativeToChangeLogFile: true
