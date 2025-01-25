@@ -20,15 +20,25 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final JwtFilter jwtFilter;
 
-    public SecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter) {
+    private final CorsConfig corsConfig;
+
+
+    public SecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter, CorsConfig corsConfig) {
         this.userDetailsService = userDetailsService;
         this.jwtFilter = jwtFilter;
+        this.corsConfig = corsConfig;
     }
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder(12);
     }
+
+    /*
+     * Throw 409 but receive 403 Forbidden instead? Why? (Without implementing ControllerAdvice)
+     * - When throw an Exception, you go redirected to the default error handler page which is /error and handled by the BasicErrorController
+     *      your authentication is being cleared from the SecurityContext (Set SecurityContextHolder to anonymous SecurityContext) and you're being redirected to a page under lock and key, hence the 403.
+     * */
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,8 +47,9 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .cors(c -> c.configurationSource(corsConfig))
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("api/auth/login", "api/auth/register", "api/auth/refresh-token").permitAll()
+                        .requestMatchers("api/auth/login", "api/auth/register", "api/auth/refresh-token", "/error").permitAll()
                         .anyRequest()
                         .authenticated());
 

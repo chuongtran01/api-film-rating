@@ -2,6 +2,9 @@ package com.personal.api_auth_base.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -13,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Data
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "user")
 public class User {
     @Id
@@ -33,9 +37,11 @@ public class User {
     private String lastName; // User's last name
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt; // Timestamp when the user was created
 
     @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
     private LocalDateTime updatedAt; // Timestamp when the user was last updated
 
     @Column(name = "active", nullable = false)

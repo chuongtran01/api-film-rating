@@ -11,9 +11,11 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.transaction.Transactional;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -34,7 +36,6 @@ public class JwtServiceImpl implements JwtService {
     private String SECRET_KEY;
     private final Long ACCESS_TOKEN_EXPIRED_TIME = (long) (1000 * 60 * 15);
     private final Long REFRESH_TOKEN_EXPIRED_TIME = (long) (1000 * 60 * 60 * 24 * 15);
-
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -101,7 +102,13 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public RefreshToken findRefreshTokenByRefreshToken(String refreshToken) {
-        return refreshTokenRepository.findByToken(refreshToken);
+        RefreshToken token = refreshTokenRepository.findByToken(refreshToken);
+
+        if (token == null || token.isRevoked() || isTokenExpired(token.getToken())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        return token;
     }
 
     @Override
@@ -118,6 +125,10 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public void blacklistAccessToken(String accessToken) {
+        if (isTokenExpired(accessToken) || accessToken == null) {
+            return;
+        }
+
         String tokenHash = hashToken(accessToken);
 
         Long expirationTime = extractExpiration(accessToken).getTime() - System.currentTimeMillis();

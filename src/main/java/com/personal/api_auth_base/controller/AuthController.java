@@ -1,8 +1,7 @@
 package com.personal.api_auth_base.controller;
 
-import com.personal.api_auth_base.dto.AuthenticationDto;
-import com.personal.api_auth_base.dto.CreateUserDto;
-import com.personal.api_auth_base.dto.SignInUserDto;
+import com.personal.api_auth_base.dto.*;
+import com.personal.api_auth_base.model.AuthenticationResponse;
 import com.personal.api_auth_base.model.LoginUser;
 import com.personal.api_auth_base.model.RefreshToken;
 import com.personal.api_auth_base.model.User;
@@ -28,44 +27,42 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public User register(@RequestBody @Valid CreateUserDto createUserDto) {
-        return authenticationService.register(createUserDto.toDso(new User()));
+    public UserDto register(@RequestBody @Valid CreateUserDto createUserDto) {
+        User newUser = authenticationService.register(createUserDto.toDso(new User()));
+        return new UserDto(newUser);
     }
 
     @PostMapping("/login")
-    public AuthenticationDto login(@RequestBody @Valid SignInUserDto signInUserDto) {
-        String accessToken = authenticationService.verify(signInUserDto.toDso(new User()));
+    public AuthenticationResponseDto login(@RequestBody @Valid SignInUserDto signInUserDto) {
+        AuthenticationResponse authenticationResponse = authenticationService.verify(signInUserDto.toDso(new User()));
 
-        String refreshToken = jwtService.generateRefreshToken(accessToken);
+        if (authenticationResponse.getStatus().equals(HttpStatus.OK)) {
+            String accessToken = authenticationResponse.getAccessToken();
+            String refreshToken = jwtService.generateRefreshToken(accessToken);
 
-        return new AuthenticationDto(accessToken, refreshToken);
+            return new AuthenticationResponseDto(accessToken, refreshToken, new UserDto(authenticationResponse.getUser()));
+        }
+        // Should never reach here since exception has been thrown
+        return new AuthenticationResponseDto(null, null, null);
     }
 
     @GetMapping("/refresh-token")
-    public AuthenticationDto refreshToken(@RequestParam(name = "refresh-token") String refreshToken) throws Exception {
-
-        RefreshToken token = jwtService.findRefreshTokenByRefreshToken(refreshToken);
-
-        if (token == null || token.isRevoked() || jwtService.isTokenExpired(token.getToken())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        }
-
+    public AuthenticationResponseDto refreshToken(@RequestBody @Valid RefreshAccessTokenDto refreshAccessTokenDto) {
+        RefreshToken token = jwtService.findRefreshTokenByRefreshToken(refreshAccessTokenDto.getRefreshToken());
         String accessToken = jwtService.generateAccessToken(token.getUser().getUsername());
-        return new AuthenticationDto(accessToken, null);
+        return new AuthenticationResponseDto(accessToken, null, null);
     }
 
     @GetMapping("/logout")
-    public void logout(@RequestParam(name = "access-token") String accessToken, @AuthenticationPrincipal LoginUser loginUser) {
-        // Blacklist access token in redis
-        jwtService.blacklistAccessToken(accessToken);
-
-        // Invalidate refresh tokens on logout
-        jwtService.revokeRefreshToken(loginUser.getUser());
+    public void logout(@RequestBody @Valid LogoutDto logoutDto, @AuthenticationPrincipal LoginUser loginUser) {
+        jwtService.blacklistAccessToken(logoutDto.getAccessToken()); // Blacklist access token in redis
+        jwtService.revokeRefreshToken(loginUser.getUser()); // Invalidate refresh tokens on logout
     }
 
     @GetMapping("/test")
     public String test(@AuthenticationPrincipal LoginUser loginUser) {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        System.out.println(loginUser.getUser());
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 //        return loginUser.getUser().getUsername();
     }
 

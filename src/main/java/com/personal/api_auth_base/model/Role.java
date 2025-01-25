@@ -2,12 +2,16 @@ package com.personal.api_auth_base.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Table(name = "role")
+@EntityListeners(AuditingEntityListener.class)
+
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +24,7 @@ public class Role {
     private String description; // Optional: Description of the role
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt; // Timestamp when the role was created
 
     // Dont work if left un-commented
