@@ -7,10 +7,13 @@ import com.personal.api_auth_base.model.RefreshToken;
 import com.personal.api_auth_base.model.User;
 import com.personal.api_auth_base.service.AuthenticationService;
 import com.personal.api_auth_base.service.JwtService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,9 +24,12 @@ public class AuthController {
 
     private final JwtService jwtService;
 
-    public AuthController(AuthenticationService authenticationService, JwtService jwtService) {
+    private final ApplicationContext applicationContext;
+
+    public AuthController(AuthenticationService authenticationService, JwtService jwtService, ApplicationContext applicationContext) {
         this.authenticationService = authenticationService;
         this.jwtService = jwtService;
+        this.applicationContext = applicationContext;
     }
 
     @PostMapping("/register")
@@ -40,22 +46,35 @@ public class AuthController {
             String accessToken = authenticationResponse.getAccessToken();
             String refreshToken = jwtService.generateRefreshToken(accessToken);
 
-            return new AuthenticationResponseDto(accessToken, refreshToken, new UserDto(authenticationResponse.getUser()));
+            return new AuthenticationResponseDto(accessToken, refreshToken);
         }
         // Should never reach here since exception has been thrown
-        return new AuthenticationResponseDto(null, null, null);
+        return new AuthenticationResponseDto(null, null);
     }
 
-    @GetMapping("/refresh-token")
+    @GetMapping("/user")
+    public UserDto getUserByAccessToken(@AuthenticationPrincipal LoginUser loginUser) {
+        return new UserDto(loginUser.getUser());
+    }
+
+    @PostMapping("/refresh-token")
     public AuthenticationResponseDto refreshToken(@RequestBody @Valid RefreshAccessTokenDto refreshAccessTokenDto) {
         RefreshToken token = jwtService.findRefreshTokenByRefreshToken(refreshAccessTokenDto.getRefreshToken());
         String accessToken = jwtService.generateAccessToken(token.getUser().getUsername());
-        return new AuthenticationResponseDto(accessToken, null, null);
+        return new AuthenticationResponseDto(accessToken, null);
     }
 
-    @GetMapping("/logout")
-    public void logout(@RequestBody @Valid LogoutDto logoutDto, @AuthenticationPrincipal LoginUser loginUser) {
-        jwtService.blacklistAccessToken(logoutDto.getAccessToken()); // Blacklist access token in redis
+    @PostMapping("/logout")
+    public void logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        String accessToken = authHeader.substring(7);
+        jwtService.blacklistAccessToken(accessToken); // Blacklist access token in redis
+
+        LoginUser loginUser = (LoginUser) applicationContext.getBean(UserDetailsService.class).loadUserByUsername(jwtService.extractUsername(accessToken));
         jwtService.revokeRefreshToken(loginUser.getUser()); // Invalidate refresh tokens on logout
     }
 

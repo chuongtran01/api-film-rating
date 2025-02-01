@@ -8,5 +8,4 @@ import lombok.Data;
 public class AuthenticationResponseDto {
     private String accessToken;
     private String refreshToken;
-    private UserDto user;
 }

@@ -2,6 +2,7 @@ package com.personal.api_auth_base.service;
 
 import com.personal.api_auth_base.model.LoginUser;
 import com.personal.api_auth_base.model.RefreshToken;
+import com.personal.api_auth_base.model.Role;
 import com.personal.api_auth_base.model.User;
 import com.personal.api_auth_base.repository.RefreshTokenRepository;
 import com.personal.api_auth_base.repository.UserRepository;
@@ -30,12 +31,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtServiceImpl implements JwtService {
     private String SECRET_KEY;
     private final Long ACCESS_TOKEN_EXPIRED_TIME = (long) (1000 * 60 * 15);
     private final Long REFRESH_TOKEN_EXPIRED_TIME = (long) (1000 * 60 * 60 * 24 * 15);
+
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -62,9 +65,13 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public String generateAccessToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        // Add user's roles
-        //  User user = userRepository.findByUsername(username);
-        claims.put("roles", "customer");
+
+        User user = userRepository.findByUsername(username);
+
+        claims.put("roles", user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
+        claims.put("firstName", user.getFirstName());
+        claims.put("lastName", user.getLastName());
+        claims.put("active", user.isActive());
 
         return Jwts.builder()
                 .claims()
