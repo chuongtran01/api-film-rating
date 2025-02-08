@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
@@ -39,17 +40,19 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthenticationResponseDto login(@RequestBody @Valid SignInUserDto signInUserDto) {
-        AuthenticationResponse authenticationResponse = authenticationService.verify(signInUserDto.toDso(new User()));
+    public AuthenticationResponseDto login(@RequestBody @Valid SignInUserDto signInUserDto) throws Exception {
+        try {
+            AuthenticationResponse authenticationResponse = authenticationService.verify(signInUserDto.toDso(new User()));
 
-        if (authenticationResponse.getStatus().equals(HttpStatus.OK)) {
             String accessToken = authenticationResponse.getAccessToken();
             String refreshToken = jwtService.generateRefreshToken(accessToken);
 
             return new AuthenticationResponseDto(accessToken, refreshToken);
+        } catch (AuthenticationException authenticationException) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, authenticationException.getMessage());
+        } catch (Exception exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // Should never reach here since exception has been thrown
-        return new AuthenticationResponseDto(null, null);
     }
 
     @GetMapping("/user")
@@ -81,7 +84,7 @@ public class AuthController {
     @GetMapping("/test")
     public String test(@AuthenticationPrincipal LoginUser loginUser) {
         System.out.println(loginUser.getUser());
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "test");
 //        return loginUser.getUser().getUsername();
     }
 
