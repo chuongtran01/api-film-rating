@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -79,18 +78,5 @@ public class AuthController {
 
         LoginUser loginUser = (LoginUser) applicationContext.getBean(UserDetailsService.class).loadUserByUsername(jwtService.extractUsername(accessToken));
         jwtService.revokeRefreshToken(loginUser.getUser()); // Invalidate refresh tokens on logout
-    }
-
-    @GetMapping("/test")
-    public String test(@AuthenticationPrincipal LoginUser loginUser) {
-        System.out.println(loginUser.getUser());
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "test");
-//        return loginUser.getUser().getUsername();
-    }
-
-    @GetMapping("/admin")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public String admin(@AuthenticationPrincipal LoginUser loginUser) {
-        return "test";
     }
 }
