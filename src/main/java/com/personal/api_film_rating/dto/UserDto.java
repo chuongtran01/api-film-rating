@@ -11,5 +11,6 @@ public class UserDto {
     private String displayName;
     private String email;
     private String role;
+    private String gender;
     private LocalDate dob;
 }

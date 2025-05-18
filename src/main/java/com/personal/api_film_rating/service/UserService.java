@@ -6,4 +6,6 @@ import java.util.UUID;
 
 public interface UserService {
     User findByUserId(UUID id);
+
+    User save(User user);
 }

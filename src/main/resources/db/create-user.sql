@@ -10,6 +10,7 @@ CREATE TABLE users (
     password        VARCHAR(255) NOT NULL,
     dob             DATE         DEFAULT NULL,
     role_id         INT          DEFAULT NULL,
+    gender          VARCHAR(10)  DEFAULT NULL,
     created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     active          BOOLEAN      DEFAULT TRUE

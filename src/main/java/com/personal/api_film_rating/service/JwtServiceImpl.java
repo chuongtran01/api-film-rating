@@ -60,6 +60,8 @@ public class JwtServiceImpl implements JwtService {
 
         claims.put("role", user.getRole().getName());
         claims.put("id", user.getId());
+        claims.put("gender", user.getGender());
+        claims.put("dob", user.getDob().toString());
         claims.put("displayName", user.getDisplayName());
         claims.put("jit", generateJitKey());
 

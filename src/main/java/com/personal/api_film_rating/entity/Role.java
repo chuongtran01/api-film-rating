@@ -1,10 +1,7 @@
 package com.personal.api_film_rating.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -36,5 +33,7 @@ public class Role {
 
     @OneToMany(mappedBy = "role")
     @Builder.Default
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private List<User> users = new ArrayList<>();
 }

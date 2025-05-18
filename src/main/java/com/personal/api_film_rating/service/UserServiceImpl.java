@@ -20,4 +20,9 @@ public class UserServiceImpl implements UserService {
     public User findByUserId(UUID id) {
         return userRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
+
+    @Override
+    public User save(User user) {
+        return userRepository.save(user);
+    }
 }

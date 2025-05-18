@@ -1,11 +1,9 @@
 package com.personal.api_film_rating.entity;
 
 import com.github.f4b6a3.uuid.UuidCreator;
+import com.personal.api_film_rating.enums.EnumGender;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -33,6 +31,8 @@ public class User {
     private String email;
 
     @Column(name = "password", nullable = false)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private String password;
 
     @Column(name = "dob")
@@ -52,7 +52,13 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private Role role;
+
+    @Column(name = "gender")
+    @Enumerated(EnumType.STRING)
+    private EnumGender gender;
 
     @PrePersist
     void prePersist() {
