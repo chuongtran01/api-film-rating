@@ -1,14 +1,18 @@
 jdbc:
-  dbname: auth
+  dbname: film_rating
   host: localhost
   dbPort: 3306
   redisPort: 6379
   password: password
   username: root
 
+redis:
+  host: localhost
+  redisPort: 6379
+
 spring:
   application:
-    name: api-auth-base
+    name: api-film-rating
 
   datasource:
     url: jdbc:mysql://${jdbc.host}:${jdbc.dbPort}/${jdbc.dbname}?autoReconnect=true&useSSL=true
@@ -18,8 +22,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     jpa:
       hibernate:
-        ddl-auto: update  # Automatically updates the schema; change to validate, create, or none as needed
-      show-sql: true       # Enables SQL logging in the console
+        ddl-auto: update # Automatically updates the schema; change to validate, create, or none as needed
+      show-sql: true # Enables SQL logging in the console
       properties:
         hibernate:
           dialect: org.hibernate.dialect.MySQL8Dialect
@@ -31,9 +35,11 @@ spring:
     database-change-log-lock-table: databasechangeloglock
 
   redis:
-    host: ${jdbc.host}
-    port: ${jdbc.redisPort}
+    host: ${redis.host}
+    port: ${redis.redisPort}
     timeout: 60000
 
-logging.level.org:
-  springframework.security: DEBUG
+jwt:
+  secret: 0dlqiztCTu9qT5PCQsvOjTsiPyfhae5MsCeseF7I8kQ=
+  access-token-expiration: 300000 # 5 minutes
+  refresh-token-expiration: 604800000 # 7 days
