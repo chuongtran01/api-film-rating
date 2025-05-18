@@ -1,11 +1,9 @@
 package com.personal.api_film_rating.service;
 
-import org.springframework.security.core.userdetails.UserDetails;
-
-import com.personal.api_film_rating.model.RefreshToken;
-import com.personal.api_film_rating.model.User;
-
+import com.personal.api_film_rating.entity.RefreshToken;
+import com.personal.api_film_rating.entity.User;
 import io.jsonwebtoken.Claims;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface JwtService {
     String generateAccessToken(String username) throws RuntimeException;

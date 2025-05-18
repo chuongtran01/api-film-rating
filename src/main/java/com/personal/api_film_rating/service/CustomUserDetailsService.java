@@ -1,14 +1,13 @@
 package com.personal.api_film_rating.service;
 
+import com.personal.api_film_rating.entity.LoginUser;
+import com.personal.api_film_rating.entity.User;
+import com.personal.api_film_rating.exceptions.UserNotActiveException;
+import com.personal.api_film_rating.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import com.personal.api_film_rating.exceptions.UserNotActiveException;
-import com.personal.api_film_rating.model.LoginUser;
-import com.personal.api_film_rating.model.User;
-import com.personal.api_film_rating.repository.UserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

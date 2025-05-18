@@ -1,11 +1,11 @@
 package com.personal.api_film_rating.controller;
 
 import com.personal.api_film_rating.dto.*;
+import com.personal.api_film_rating.entity.AuthenticationResponse;
+import com.personal.api_film_rating.entity.LoginUser;
+import com.personal.api_film_rating.entity.RefreshToken;
+import com.personal.api_film_rating.entity.User;
 import com.personal.api_film_rating.mapper.UserMapper;
-import com.personal.api_film_rating.model.AuthenticationResponse;
-import com.personal.api_film_rating.model.LoginUser;
-import com.personal.api_film_rating.model.RefreshToken;
-import com.personal.api_film_rating.model.User;
 import com.personal.api_film_rating.service.AuthenticationService;
 import com.personal.api_film_rating.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;

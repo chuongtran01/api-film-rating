@@ -1,9 +1,9 @@
 package com.personal.api_film_rating.service;
 
 import com.personal.api_film_rating.configuration.JwtConfig;
-import com.personal.api_film_rating.model.LoginUser;
-import com.personal.api_film_rating.model.RefreshToken;
-import com.personal.api_film_rating.model.User;
+import com.personal.api_film_rating.entity.LoginUser;
+import com.personal.api_film_rating.entity.RefreshToken;
+import com.personal.api_film_rating.entity.User;
 import com.personal.api_film_rating.repository.RefreshTokenRepository;
 import com.personal.api_film_rating.repository.UserRepository;
 import io.jsonwebtoken.Claims;

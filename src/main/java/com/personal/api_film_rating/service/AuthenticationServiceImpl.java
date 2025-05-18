@@ -1,12 +1,12 @@
 package com.personal.api_film_rating.service;
 
+import com.personal.api_film_rating.entity.AuthenticationResponse;
+import com.personal.api_film_rating.entity.LoginUser;
+import com.personal.api_film_rating.entity.User;
 import com.personal.api_film_rating.enums.EnumRole;
 import com.personal.api_film_rating.exceptions.AuthenticationException;
 import com.personal.api_film_rating.exceptions.UserAlreadyExistsException;
 import com.personal.api_film_rating.exceptions.UserNotActiveException;
-import com.personal.api_film_rating.model.AuthenticationResponse;
-import com.personal.api_film_rating.model.LoginUser;
-import com.personal.api_film_rating.model.User;
 import com.personal.api_film_rating.repository.RoleRepository;
 import com.personal.api_film_rating.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;

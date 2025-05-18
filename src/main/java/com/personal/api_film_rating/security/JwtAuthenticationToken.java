@@ -1,5 +1,6 @@
 package com.personal.api_film_rating.security;
 
+import com.personal.api_film_rating.entity.JwtUserPrincipal;
 import lombok.Getter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -8,13 +9,8 @@ import java.util.List;
 
 @Getter
 public class JwtAuthenticationToken extends UsernamePasswordAuthenticationToken {
-    private final String id;
-    private final String role;
+    public JwtAuthenticationToken(JwtUserPrincipal principal) {
+        super(principal, null, List.of(new SimpleGrantedAuthority(principal.getRole())));
 
-    public JwtAuthenticationToken(String id, String email, String role) {
-        super(email, null, List.of(new SimpleGrantedAuthority(role)));
-
-        this.id = id;
-        this.role = role;
     }
 }

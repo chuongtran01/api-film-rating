@@ -1,4 +1,4 @@
-package com.personal.api_film_rating.model;
+package com.personal.api_film_rating.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

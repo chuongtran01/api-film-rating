@@ -1,6 +1,7 @@
 package com.personal.api_film_rating.security;
 
 import com.personal.api_film_rating.dto.JwtErrorResponseDto;
+import com.personal.api_film_rating.entity.JwtUserPrincipal;
 import com.personal.api_film_rating.service.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -45,10 +46,13 @@ public class JwtFilter extends OncePerRequestFilter {
             String email = claims.getSubject();
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                JwtAuthenticationToken authToken = new JwtAuthenticationToken(
-                        claims.get("id", String.class),
-                        email,
-                        claims.get("role", String.class));
+                JwtUserPrincipal principal = JwtUserPrincipal.builder()
+                        .id(claims.get("id", String.class))
+                        .email(email)
+                        .role(claims.get("role", String.class))
+                        .build();
+
+                JwtAuthenticationToken authToken = new JwtAuthenticationToken(principal);
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);

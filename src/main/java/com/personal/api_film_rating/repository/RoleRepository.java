@@ -1,6 +1,6 @@
 package com.personal.api_film_rating.repository;
 
-import com.personal.api_film_rating.model.Role;
+import com.personal.api_film_rating.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

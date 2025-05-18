@@ -1,4 +1,4 @@
-package com.personal.api_film_rating.model;
+package com.personal.api_film_rating.entity;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.*;
