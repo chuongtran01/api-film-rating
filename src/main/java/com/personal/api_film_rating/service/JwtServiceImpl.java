@@ -135,10 +135,13 @@ public class JwtServiceImpl implements JwtService {
             String userId = claims.get("id", String.class);
             String jit = claims.get("jit", String.class);
 
-            Duration ttl = Duration.ofMillis(extractExpiration(accessToken).getTime() - System.currentTimeMillis());
+            long millis = extractExpiration(accessToken).getTime() - System.currentTimeMillis();
 
-            String key = String.format(TOKEN_BLACK_LIST_PREFIX, userId, jit);
-            redisService.save(key, "true", ttl);
+            if (millis > 0) {
+                Duration ttl = Duration.ofMillis(millis);
+                String key = String.format(TOKEN_BLACK_LIST_PREFIX, userId, jit);
+                redisService.save(key, "true", ttl);
+            }
         } catch (ExpiredJwtException e) {
             log.info(e.getMessage());
         } catch (Exception e) {
