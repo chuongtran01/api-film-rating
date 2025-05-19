@@ -130,6 +130,10 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public void blacklistAccessToken(String accessToken) {
+        if (isTokenExpired(accessToken)) {
+            return;
+        }
+
         try {
             Claims claims = extractAllClaims(accessToken);
             String userId = claims.get("id", String.class);
@@ -184,7 +188,7 @@ public class JwtServiceImpl implements JwtService {
         String key = String.format(TOKEN_BLACK_LIST_PREFIX, userId, jit);
         String value = redisService.get(key);
 
-        return !Boolean.TRUE.equals(Boolean.valueOf(value));
+        return Boolean.TRUE.equals(Boolean.valueOf(value));
     }
 
     @Override

@@ -1,5 +1,9 @@
 package com.personal.api_film_rating.security;
 
+import com.personal.api_film_rating.entity.LoginUser;
+import com.personal.api_film_rating.entity.User;
+import com.personal.api_film_rating.exceptions.UserNotActiveException;
+import com.personal.api_film_rating.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -17,13 +22,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
     private final JwtFilter jwtFilter;
 
     private final CorsConfig corsConfig;
 
-    public SecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter, CorsConfig corsConfig) {
-        this.userDetailsService = userDetailsService;
+    public SecurityConfig(UserRepository userRepository, JwtFilter jwtFilter, CorsConfig corsConfig) {
+        this.userRepository = userRepository;
         this.jwtFilter = jwtFilter;
         this.corsConfig = corsConfig;
     }
@@ -61,10 +66,27 @@ public class SecurityConfig {
     }
 
     @Bean
+    public UserDetailsService userDetailsService() {
+        return email -> {
+            User loginUser = userRepository.findByEmail(email);
+
+            if (loginUser == null) {
+                throw new UsernameNotFoundException("User not found");
+            }
+
+            if (!loginUser.isActive()) {
+                throw new UserNotActiveException("User is not active");
+            }
+
+            return new LoginUser(loginUser);
+        };
+    }
+
+    @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(bCryptPasswordEncoder());
-        provider.setUserDetailsService(userDetailsService);
+        provider.setUserDetailsService(userDetailsService());
 
         return provider;
     }
