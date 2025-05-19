@@ -8,10 +8,7 @@ import com.personal.api_film_rating.enums.EnumGender;
 import com.personal.api_film_rating.mapper.UserMapper;
 import com.personal.api_film_rating.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -24,6 +21,11 @@ public class UserController {
     public UserController(UserService userService, UserMapper userMapper) {
         this.userService = userService;
         this.userMapper = userMapper;
+    }
+
+    @GetMapping("/my-account")
+    public UserDto getMyAccount(@AuthenticationPrincipal JwtUserPrincipal loginUser) {
+        return userMapper.toUserDto(userService.findByUserId(UUID.fromString(loginUser.getId())));
     }
 
     @PutMapping("/my-account")

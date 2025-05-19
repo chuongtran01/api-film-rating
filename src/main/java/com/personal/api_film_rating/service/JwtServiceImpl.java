@@ -7,10 +7,12 @@ import com.personal.api_film_rating.entity.User;
 import com.personal.api_film_rating.repository.RefreshTokenRepository;
 import com.personal.api_film_rating.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,7 +34,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtServiceImpl implements JwtService {
+    private final String TOKEN_BLACK_LIST_PREFIX = "TOKEN_BLACK_LIST_%s_%s";
     private final JwtConfig jwtConfig;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -126,15 +130,20 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public void blacklistAccessToken(String accessToken) {
-        if (isTokenExpired(accessToken) || accessToken == null) {
-            return;
+        try {
+            Claims claims = extractAllClaims(accessToken);
+            String userId = claims.get("id", String.class);
+            String jit = claims.get("jit", String.class);
+
+            Duration ttl = Duration.ofMillis(extractExpiration(accessToken).getTime() - System.currentTimeMillis());
+
+            String key = String.format(TOKEN_BLACK_LIST_PREFIX, userId, jit);
+            redisService.save(key, "true", ttl);
+        } catch (ExpiredJwtException e) {
+            log.info(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
         }
-
-        String tokenHash = hashToken(accessToken);
-
-        Long expirationTime = extractExpiration(accessToken).getTime() - System.currentTimeMillis();
-
-        redisService.save("blacklist", tokenHash, "blacklisted", expirationTime);
     }
 
     private String hashToken(String token) {
@@ -165,8 +174,14 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public boolean isTokenBlacklisted(String accessToken) {
-        String tokenHash = hashToken(accessToken); // Hash the token to match Redis storage
-        return redisService.get("blacklist", tokenHash) != null;
+        Claims claims = extractAllClaims(accessToken);
+        String userId = claims.get("id", String.class);
+        String jit = claims.get("jit", String.class);
+
+        String key = String.format(TOKEN_BLACK_LIST_PREFIX, userId, jit);
+        String value = redisService.get(key);
+
+        return !Boolean.TRUE.equals(Boolean.valueOf(value));
     }
 
     @Override

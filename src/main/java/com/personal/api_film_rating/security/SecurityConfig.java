@@ -52,7 +52,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(c -> c.configurationSource(corsConfig))
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("api/auth/login", "api/auth/register", "api/auth/refresh-token", "/error")
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh-token", "/error")
                         .permitAll()
                         .anyRequest()
                         .authenticated());

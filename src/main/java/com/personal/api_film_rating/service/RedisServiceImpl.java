@@ -3,7 +3,7 @@ package com.personal.api_film_rating.service;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 @Service
 public class RedisServiceImpl implements RedisService {
@@ -15,25 +15,17 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public void save(String key, String field, String value, Long expirationTime) {
-        redisTemplate.opsForHash().put(key, field, value);
-
-        if (expirationTime != null && expirationTime > 0) {
-            redisTemplate.expire(key, expirationTime, TimeUnit.SECONDS);
-        }
+    public void save(String key, String value, Duration ttl) {
+        redisTemplate.opsForValue().set(key, value, ttl);
     }
 
     @Override
-    public String get(String key, String field) {
-        // Retrieve a specific field from the hash
-        Object value = redisTemplate.opsForHash().get(key, field);
-
-        // Return the value as a string, or null if not found
-        return value != null ? value.toString() : null;
+    public String get(String key) {
+        return redisTemplate.opsForValue().get(key);
     }
 
     @Override
-    public void delete(String key) {
-        redisTemplate.delete(key);
+    public boolean delete(String key) {
+        return Boolean.TRUE.equals(redisTemplate.delete(key));
     }
 }
