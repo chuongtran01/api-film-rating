@@ -7,6 +7,12 @@ import com.personal.api_film_rating.entity.User;
 import com.personal.api_film_rating.enums.EnumGender;
 import com.personal.api_film_rating.mapper.UserMapper;
 import com.personal.api_film_rating.service.UserService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,5 +42,16 @@ public class UserController {
         user.setDisplayName(myAccountDto.displayName());
 
         return userMapper.toUserDto(userService.save(user));
+    }
+
+    @GetMapping
+    public ResponseEntity<PagedModel<UserDto>> findUsersByRole(
+            @RequestParam(required = false) String role,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new PagedModel<>(userService.findUsersByRole(role, pageable).map(userMapper::toUserDto)));
     }
 }

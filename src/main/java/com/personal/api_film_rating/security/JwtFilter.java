@@ -16,9 +16,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+    // TODO: move this to application.yml
+    private static final List<String> WHITELIST = List.of(
+            "/api/auth/login",
+            "/api/auth/register",
+            "/api/auth/refresh-token",
+            "/error"
+    );
     private final JwtService jwtService;
 
     public JwtFilter(JwtService jwtService) {
@@ -29,6 +37,12 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
+
+        String path = request.getServletPath();
+        if (WHITELIST.contains(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);

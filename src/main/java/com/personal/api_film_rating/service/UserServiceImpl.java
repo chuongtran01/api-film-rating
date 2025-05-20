@@ -2,6 +2,8 @@ package com.personal.api_film_rating.service;
 
 import com.personal.api_film_rating.entity.User;
 import com.personal.api_film_rating.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,5 +26,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public User save(User user) {
         return userRepository.save(user);
+    }
+
+    @Override
+    public Page<User> findUsersByRole(String role, Pageable pageable) {
+        return userRepository.findByRoleName(role, pageable);
     }
 }
