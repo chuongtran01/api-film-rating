@@ -10,3 +10,11 @@ databaseChangeLog:
   - include:
       file: "db/create-refresh-token.sql"
       relativeToChangeLogFile: true
+
+  - include:
+      file: "db/filters.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/modify-streaming-platform.sql"
+      relativeToChangeLogFile: true

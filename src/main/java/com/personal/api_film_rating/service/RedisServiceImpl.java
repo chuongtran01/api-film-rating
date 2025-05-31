@@ -14,16 +14,35 @@ public class RedisServiceImpl implements RedisService {
         this.redisTemplate = redisTemplate;
     }
 
+    /**
+     * Save a value to Redis
+     * 
+     * @param key
+     * @param value
+     * @param ttl
+     */
     @Override
     public void save(String key, String value, Duration ttl) {
         redisTemplate.opsForValue().set(key, value, ttl);
     }
 
+    /**
+     * Get a value from Redis
+     * 
+     * @param key
+     * @return String
+     */
     @Override
     public String get(String key) {
         return redisTemplate.opsForValue().get(key);
     }
 
+    /**
+     * Delete a value from Redis
+     * 
+     * @param key
+     * @return boolean
+     */
     @Override
     public boolean delete(String key) {
         return Boolean.TRUE.equals(redisTemplate.delete(key));

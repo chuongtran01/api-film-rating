@@ -1,5 +1,6 @@
 package com.personal.api_film_rating.security;
 
+import com.personal.api_film_rating.configuration.JwtConfig;
 import com.personal.api_film_rating.dto.JwtErrorResponseDto;
 import com.personal.api_film_rating.entity.JwtUserPrincipal;
 import com.personal.api_film_rating.service.JwtService;
@@ -10,27 +11,24 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-    // TODO: move this to application.yml
-    private static final List<String> WHITELIST = List.of(
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/auth/refresh-token",
-            "/error"
-    );
+
+    private final JwtConfig jwtConfig;
+
     private final JwtService jwtService;
 
-    public JwtFilter(JwtService jwtService) {
+    public JwtFilter(JwtService jwtService, JwtConfig jwtConfig) {
         this.jwtService = jwtService;
+        this.jwtConfig = jwtConfig;
     }
 
     @Override
@@ -39,7 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         String path = request.getServletPath();
-        if (WHITELIST.contains(path)) {
+        if (jwtConfig.getWhitelist().contains(path)) {
             filterChain.doFilter(request, response);
             return;
         }

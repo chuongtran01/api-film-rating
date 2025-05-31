@@ -56,6 +56,12 @@ public class JwtServiceImpl implements JwtService {
         this.applicationContext = applicationContext;
     }
 
+    /**
+     * Generate an access token
+     * 
+     * @param email
+     * @return String
+     */
     @Override
     public String generateAccessToken(String email) {
         Map<String, Object> claims = new HashMap<>();
@@ -65,7 +71,7 @@ public class JwtServiceImpl implements JwtService {
         claims.put("role", user.getRole().getName());
         claims.put("id", user.getId());
         claims.put("gender", user.getGender());
-        claims.put("dob", user.getDob().toString());
+        claims.put("dob", user.getDob() != null ? user.getDob().toString() : null);
         claims.put("displayName", user.getDisplayName());
         claims.put("jit", generateJitKey());
 
@@ -80,6 +86,12 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    /**
+     * Generate a refresh token
+     * 
+     * @param accessToken
+     * @return String
+     */
     @Override
     @Transactional
     public String generateRefreshToken(String accessToken) {
@@ -104,6 +116,12 @@ public class JwtServiceImpl implements JwtService {
         return refreshToken;
     }
 
+    /**
+     * Find a refresh token by refresh token
+     * 
+     * @param refreshToken
+     * @return RefreshToken
+     */
     @Override
     public RefreshToken findRefreshTokenByRefreshToken(String refreshToken) {
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken);
@@ -115,6 +133,12 @@ public class JwtServiceImpl implements JwtService {
         return token;
     }
 
+    /**
+     * Revoke a refresh token
+     * 
+     * @param user
+     * @return RefreshToken
+     */
     @Override
     public RefreshToken revokeRefreshToken(User user) {
         RefreshToken refreshToken = refreshTokenRepository
@@ -128,6 +152,11 @@ public class JwtServiceImpl implements JwtService {
         return refreshToken;
     }
 
+    /**
+     * Blacklist an access token
+     * 
+     * @param accessToken
+     */
     @Override
     public void blacklistAccessToken(String accessToken) {
         if (isTokenExpired(accessToken)) {
@@ -163,22 +192,47 @@ public class JwtServiceImpl implements JwtService {
         }
     }
 
+    /**
+     * Extract an email from a token
+     * 
+     * @param token
+     * @return String
+     */
     @Override
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    /**
+     * Validate a token
+     * 
+     * @param token
+     * @param userDetails
+     * @return boolean
+     */
     @Override
     public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractEmail(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
+    /**
+     * Check if a token is expired
+     * 
+     * @param token
+     * @return boolean
+     */
     @Override
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
+    /**
+     * Check if a token is blacklisted
+     * 
+     * @param accessToken
+     * @return boolean
+     */
     @Override
     public boolean isTokenBlacklisted(String accessToken) {
         Claims claims = extractAllClaims(accessToken);
@@ -191,6 +245,12 @@ public class JwtServiceImpl implements JwtService {
         return Boolean.TRUE.equals(Boolean.valueOf(value));
     }
 
+    /**
+     * Extract all claims from a token
+     * 
+     * @param token
+     * @return Claims
+     */
     @Override
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
@@ -200,20 +260,43 @@ public class JwtServiceImpl implements JwtService {
                 .getPayload();
     }
 
+    /**
+     * Extract the expiration date from a token
+     * 
+     * @param token
+     * @return Date
+     */
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
+    /**
+     * Extract a claim from a token
+     * 
+     * @param token
+     * @param claimResolver
+     * @return T
+     */
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
         final Claims claims = extractAllClaims(token);
         return claimResolver.apply(claims);
     }
 
+    /**
+     * Get the key for the JWT
+     * 
+     * @return SecretKey
+     */
     private SecretKey getKey() throws RuntimeException {
         byte[] secretKeyBytes = Decoders.BASE64.decode(jwtConfig.getSecret());
         return Keys.hmacShaKeyFor(secretKeyBytes);
     }
 
+    /**
+     * Generate a JIT key
+     * 
+     * @return String
+     */
     private String generateJitKey() {
         byte[] randomBytes = new byte[32]; // 256 bits
         new java.security.SecureRandom().nextBytes(randomBytes);
