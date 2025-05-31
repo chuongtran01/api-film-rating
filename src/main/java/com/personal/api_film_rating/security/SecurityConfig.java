@@ -1,5 +1,6 @@
 package com.personal.api_film_rating.security;
 
+import com.personal.api_film_rating.configuration.JwtConfig;
 import com.personal.api_film_rating.entity.LoginUser;
 import com.personal.api_film_rating.entity.User;
 import com.personal.api_film_rating.exceptions.UserNotActiveException;
@@ -27,12 +28,21 @@ public class SecurityConfig {
 
     private final CorsConfig corsConfig;
 
-    public SecurityConfig(UserRepository userRepository, JwtFilter jwtFilter, CorsConfig corsConfig) {
+    private final JwtConfig jwtConfig;
+
+    public SecurityConfig(UserRepository userRepository, JwtFilter jwtFilter, CorsConfig corsConfig,
+            JwtConfig jwtConfig) {
         this.userRepository = userRepository;
         this.jwtFilter = jwtFilter;
         this.corsConfig = corsConfig;
+        this.jwtConfig = jwtConfig;
     }
 
+    /**
+     * BCrypt password encoder
+     * 
+     * @return BCryptPasswordEncoder
+     */
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder(12);
@@ -48,6 +58,13 @@ public class SecurityConfig {
      * redirected to a page under lock and key, hence the 403.
      */
 
+    /**
+     * Security filter chain
+     * 
+     * @param http
+     * @return SecurityFilterChain
+     * @throws Exception
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
@@ -57,7 +74,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(c -> c.configurationSource(corsConfig))
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh-token", "/error")
+                        .requestMatchers(jwtConfig.getWhitelist().toArray(String[]::new))
                         .permitAll()
                         .anyRequest()
                         .authenticated());
@@ -65,6 +82,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * User details service
+     * 
+     * @return UserDetailsService
+     */
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> {
@@ -82,6 +104,11 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * Authentication provider
+     * 
+     * @return AuthenticationProvider
+     */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -91,6 +118,12 @@ public class SecurityConfig {
         return provider;
     }
 
+    /**
+     * Authentication manager
+     * 
+     * @param config
+     * @return AuthenticationManager
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

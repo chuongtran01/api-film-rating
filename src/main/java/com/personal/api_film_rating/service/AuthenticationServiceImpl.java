@@ -23,16 +23,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final NamingService namingService;
 
-    public AuthenticationServiceImpl(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
-                                     AuthenticationManager authenticationManager, JwtService jwtService) {
+    public AuthenticationServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            AuthenticationManager authenticationManager, JwtService jwtService, NamingService namingService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.namingService = namingService;
     }
 
+    /**
+     * Register a new user
+     * 
+     * @param user
+     * @return User
+     */
     @Override
     public User register(User user) {
         log.info("Attempting to register user: {}", user);
@@ -44,6 +53,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             validatePassword(user.getPassword());
 
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+            user.setDisplayName(namingService.generateDisplayName(user.getEmail()));
 
             var role = roleRepository.findByName(EnumRole.ROLE_USER.toString()).orElse(null);
             user.setRole(role);
@@ -58,6 +68,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+    /**
+     * Verify a user
+     * 
+     * @param email
+     * @param password
+     * @return AuthenticationResponse
+     */
     @Override
     public AuthenticationResponse verify(String email, String password) {
         try {
@@ -82,6 +99,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+    /**
+     * Get a token
+     * 
+     * @param authHeader
+     * @return String
+     */
     @Override
     public String getToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -90,6 +113,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return authHeader.substring(7);
     }
 
+    /**
+     * Change a user's password
+     * 
+     * @param user
+     * @param newPassword
+     * @return User
+     */
+    @Override
+    public User changePassword(User user, String newPassword) {
+        validatePassword(newPassword);
+        user.setPassword(bCryptPasswordEncoder.encode(newPassword));
+        return userRepository.save(user);
+    }
+
+    /**
+     * Validate a password
+     * 
+     * @param password
+     */
     private void validatePassword(String password) {
         if (password == null || password.length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters long");

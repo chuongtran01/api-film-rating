@@ -10,6 +10,12 @@ import java.util.List;
 @Component
 public class CorsConfig implements CorsConfigurationSource {
 
+    /**
+     * Get the CORS configuration
+     * 
+     * @param request
+     * @return CorsConfiguration
+     */
     @Override
     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
         CorsConfiguration configuration = new CorsConfiguration();

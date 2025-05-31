@@ -9,6 +9,11 @@ import java.util.List;
 
 @Getter
 public class JwtAuthenticationToken extends UsernamePasswordAuthenticationToken {
+    /**
+     * Constructor
+     * 
+     * @param principal
+     */
     public JwtAuthenticationToken(JwtUserPrincipal principal) {
         super(principal, null, List.of(new SimpleGrantedAuthority(principal.getRole())));
 
