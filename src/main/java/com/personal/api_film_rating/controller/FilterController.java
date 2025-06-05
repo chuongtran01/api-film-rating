@@ -26,6 +26,7 @@ import com.personal.api_film_rating.dto.FilterDto;
 import com.personal.api_film_rating.dto.GenreDto;
 import com.personal.api_film_rating.dto.LanguageDto;
 import com.personal.api_film_rating.dto.ShowStatusDto;
+import com.personal.api_film_rating.dto.ShowTypeDto;
 import com.personal.api_film_rating.dto.StreamingPlatformDto;
 import com.personal.api_film_rating.entity.Country;
 import com.personal.api_film_rating.entity.Genre;
@@ -33,12 +34,16 @@ import com.personal.api_film_rating.entity.StreamingPlatform;
 import com.personal.api_film_rating.entity.JwtUserPrincipal;
 import com.personal.api_film_rating.entity.Language;
 import com.personal.api_film_rating.entity.ShowStatus;
+import com.personal.api_film_rating.entity.ShowType;
 import com.personal.api_film_rating.mapper.GenreMapper;
 import com.personal.api_film_rating.mapper.CountryMapper;
 import com.personal.api_film_rating.mapper.LanguageMapper;
 import com.personal.api_film_rating.mapper.StreamingPlatformMapper;
 import com.personal.api_film_rating.mapper.ShowStatusMapper;
+import com.personal.api_film_rating.mapper.ShowTypeMapper;
 import com.personal.api_film_rating.service.FilterService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/filters")
@@ -50,16 +55,18 @@ public class FilterController {
   private CountryMapper countryMapper;
   private LanguageMapper languageMapper;
   private ShowStatusMapper statusMapper;
+  private ShowTypeMapper showTypeMapper;
 
   FilterController(FilterService filterService, GenreMapper genreMapper,
       StreamingPlatformMapper streamingPlatformMapper, CountryMapper countryMapper, LanguageMapper languageMapper,
-      ShowStatusMapper statusMapper) {
+      ShowStatusMapper statusMapper, ShowTypeMapper showTypeMapper) {
     this.filterService = filterService;
     this.genreMapper = genreMapper;
     this.streamingPlatformMapper = streamingPlatformMapper;
     this.countryMapper = countryMapper;
     this.languageMapper = languageMapper;
     this.statusMapper = statusMapper;
+    this.showTypeMapper = showTypeMapper;
   }
 
   /**
@@ -89,9 +96,12 @@ public class FilterController {
     List<LanguageDto> languages = filterService.findAllLanguages().stream()
         .map(languageMapper::toLanguageDto)
         .collect(Collectors.toList());
+    List<ShowTypeDto> showTypes = filterService.findAllShowTypes().stream()
+        .map(showTypeMapper::toShowTypeDto)
+        .collect(Collectors.toList());
 
     return ResponseEntity.status(HttpStatus.OK)
-        .body(new FilterDto(genres, streamingPlatforms, countries, showStatuses, languages));
+        .body(new FilterDto(genres, streamingPlatforms, countries, showStatuses, languages, showTypes));
   }
 
   /**
@@ -106,15 +116,28 @@ public class FilterController {
   @GetMapping("/genres")
   public ResponseEntity<PagedModel<GenreDto>> getGenres(
       @RequestParam(required = false) String name,
-      @RequestParam(required = false) String id,
-      @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+      @RequestParam(required = false) String code,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to get genres");
     }
     return ResponseEntity.status(HttpStatus.OK)
         .body(new PagedModel<>(
-            filterService.findGenresPageable(name, id, pageable).map(genreMapper::toGenreDto)));
+            filterService.findGenresPageable(name, code, pageable).map(genreMapper::toGenreDto)));
+  }
+
+  /**
+   * Get all genres
+   * 
+   * @return List<GenreDto>
+   */
+  @GetMapping("/genres/all")
+  public ResponseEntity<List<GenreDto>> getAllGenres() {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(filterService.findAllGenres().stream()
+            .map(genreMapper::toGenreDto)
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -125,7 +148,7 @@ public class FilterController {
    * @return GenreDto
    */
   @PostMapping("/genres")
-  public ResponseEntity<GenreDto> createGenre(@RequestBody GenreDto genreDto,
+  public ResponseEntity<GenreDto> createGenre(@RequestBody @Valid GenreDto genreDto,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to create a genre");
@@ -143,7 +166,7 @@ public class FilterController {
    * @return Void
    */
   @DeleteMapping("/genres/{id}")
-  public ResponseEntity<Void> deleteGenre(@PathVariable String id,
+  public ResponseEntity<Void> deleteGenre(@PathVariable Integer id,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to delete a genre");
@@ -161,12 +184,13 @@ public class FilterController {
    * @return GenreDto
    */
   @PutMapping("/genres/{id}")
-  public ResponseEntity<GenreDto> updateGenre(@PathVariable String id, @RequestBody GenreDto genreDto,
+  public ResponseEntity<GenreDto> updateGenre(@PathVariable Integer id, @RequestBody GenreDto genreDto,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to update a genre");
     }
     Genre genre = filterService.findGenreById(id);
+    genre.setCode(genreDto.code());
     genre.setName(genreDto.name());
 
     return ResponseEntity.status(HttpStatus.OK)
@@ -185,16 +209,29 @@ public class FilterController {
   @GetMapping("/streaming-platforms")
   public ResponseEntity<PagedModel<StreamingPlatformDto>> getStreamingPlatforms(
       @RequestParam(required = false) String name,
-      @RequestParam(required = false) String id,
-      @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+      @RequestParam(required = false) String code,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to get streaming platforms");
     }
     return ResponseEntity.status(HttpStatus.OK)
         .body(new PagedModel<>(
-            filterService.findStreamingPlatformsPageable(name, id, pageable)
+            filterService.findStreamingPlatformsPageable(name, code, pageable)
                 .map(streamingPlatformMapper::toStreamingPlatformDto)));
+  }
+
+  /**
+   * Get all streaming platforms
+   * 
+   * @return List<StreamingPlatformDto>
+   */
+  @GetMapping("/streaming-platforms/all")
+  public ResponseEntity<List<StreamingPlatformDto>> getAllStreamingPlatforms() {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(filterService.findAllStreamingPlatforms().stream()
+            .map(streamingPlatformMapper::toStreamingPlatformDto)
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -226,13 +263,14 @@ public class FilterController {
    * @return StreamingPlatformDto
    */
   @PutMapping("/streaming-platforms/{id}")
-  public ResponseEntity<StreamingPlatformDto> updateStreamingPlatform(@PathVariable String id,
+  public ResponseEntity<StreamingPlatformDto> updateStreamingPlatform(@PathVariable Integer id,
       @RequestBody StreamingPlatformDto streamingPlatformDto,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to update a streaming platform");
     }
     StreamingPlatform streamingPlatform = filterService.findStreamingPlatformById(id);
+    streamingPlatform.setCode(streamingPlatformDto.code());
     streamingPlatform.setName(streamingPlatformDto.name());
     streamingPlatform.setUrl(streamingPlatformDto.url());
     streamingPlatform.setLogo(streamingPlatformDto.logo());
@@ -249,7 +287,7 @@ public class FilterController {
    * @return Void
    */
   @DeleteMapping("/streaming-platforms/{id}")
-  public ResponseEntity<Void> deleteStreamingPlatform(@PathVariable String id,
+  public ResponseEntity<Void> deleteStreamingPlatform(@PathVariable Integer id,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to delete a streaming platform");
@@ -270,15 +308,28 @@ public class FilterController {
   @GetMapping("/countries")
   public ResponseEntity<PagedModel<CountryDto>> getCountries(
       @RequestParam(required = false) String name,
-      @RequestParam(required = false) String id,
-      @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+      @RequestParam(required = false) String code,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to get countries");
     }
     return ResponseEntity.status(HttpStatus.OK)
         .body(new PagedModel<>(
-            filterService.findCountriesPageable(name, id, pageable).map(countryMapper::toCountryDto)));
+            filterService.findCountriesPageable(name, code, pageable).map(countryMapper::toCountryDto)));
+  }
+
+  /**
+   * Get all countries
+   * 
+   * @return List<CountryDto>
+   */
+  @GetMapping("/countries/all")
+  public ResponseEntity<List<CountryDto>> getAllCountries() {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(filterService.findAllCountries().stream()
+            .map(countryMapper::toCountryDto)
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -308,12 +359,13 @@ public class FilterController {
    * @return CountryDto
    */
   @PutMapping("/countries/{id}")
-  public ResponseEntity<CountryDto> updateCountry(@PathVariable String id, @RequestBody CountryDto countryDto,
+  public ResponseEntity<CountryDto> updateCountry(@PathVariable Integer id, @RequestBody CountryDto countryDto,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to update a country");
     }
     Country country = filterService.findCountryById(id);
+    country.setCode(countryDto.code());
     country.setName(countryDto.name());
     country.setFlag(countryDto.flag());
 
@@ -329,7 +381,7 @@ public class FilterController {
    * @return Void
    */
   @DeleteMapping("/countries/{id}")
-  public ResponseEntity<Void> deleteCountry(@PathVariable String id,
+  public ResponseEntity<Void> deleteCountry(@PathVariable Integer id,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to delete a country");
@@ -350,15 +402,28 @@ public class FilterController {
   @GetMapping("/languages")
   public ResponseEntity<PagedModel<LanguageDto>> getLanguages(
       @RequestParam(required = false) String name,
-      @RequestParam(required = false) String id,
-      @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+      @RequestParam(required = false) String code,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to get languages");
     }
     return ResponseEntity.status(HttpStatus.OK)
         .body(new PagedModel<>(
-            filterService.findLanguagesPageable(name, id, pageable).map(languageMapper::toLanguageDto)));
+            filterService.findLanguagesPageable(name, code, pageable).map(languageMapper::toLanguageDto)));
+  }
+
+  /**
+   * Get all languages
+   * 
+   * @return List<LanguageDto>
+   */
+  @GetMapping("/languages/all")
+  public ResponseEntity<List<LanguageDto>> getAllLanguages() {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(filterService.findAllLanguages().stream()
+            .map(languageMapper::toLanguageDto)
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -388,12 +453,13 @@ public class FilterController {
    * @return LanguageDto
    */
   @PutMapping("/languages/{id}")
-  public ResponseEntity<LanguageDto> updateLanguage(@PathVariable String id, @RequestBody LanguageDto languageDto,
+  public ResponseEntity<LanguageDto> updateLanguage(@PathVariable Integer id, @RequestBody LanguageDto languageDto,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to update a language");
     }
     Language language = filterService.findLanguageById(id);
+    language.setCode(languageDto.code());
     language.setName(languageDto.name());
 
     return ResponseEntity.status(HttpStatus.OK)
@@ -408,7 +474,7 @@ public class FilterController {
    * @return Void
    */
   @DeleteMapping("/languages/{id}")
-  public ResponseEntity<Void> deleteLanguage(@PathVariable String id,
+  public ResponseEntity<Void> deleteLanguage(@PathVariable Integer id,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to delete a language");
@@ -429,15 +495,28 @@ public class FilterController {
   @GetMapping("/show-statuses")
   public ResponseEntity<PagedModel<ShowStatusDto>> getShowStatuses(
       @RequestParam(required = false) String name,
-      @RequestParam(required = false) String id,
-      @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+      @RequestParam(required = false) String code,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to get show statuses");
     }
     return ResponseEntity.status(HttpStatus.OK)
         .body(new PagedModel<>(
-            filterService.findShowStatusesPageable(name, id, pageable).map(statusMapper::toStatusDto)));
+            filterService.findShowStatusesPageable(name, code, pageable).map(statusMapper::toStatusDto)));
+  }
+
+  /**
+   * Get all show statuses
+   * 
+   * @return List<ShowStatusDto>
+   */
+  @GetMapping("/show-statuses/all")
+  public ResponseEntity<List<ShowStatusDto>> getAllShowStatuses() {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(filterService.findAllShowStatuses().stream()
+            .map(statusMapper::toStatusDto)
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -467,12 +546,13 @@ public class FilterController {
    * @return ShowStatusDto
    */
   @PutMapping("/show-statuses/{id}")
-  public ResponseEntity<ShowStatusDto> updateShowStatus(@PathVariable String id, @RequestBody ShowStatusDto statusDto,
+  public ResponseEntity<ShowStatusDto> updateShowStatus(@PathVariable Integer id, @RequestBody ShowStatusDto statusDto,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to update a show status");
     }
     ShowStatus status = filterService.findShowStatusById(id);
+    status.setCode(statusDto.code());
     status.setName(statusDto.name());
 
     return ResponseEntity.status(HttpStatus.OK)
@@ -487,12 +567,104 @@ public class FilterController {
    * @return Void
    */
   @DeleteMapping("/show-statuses/{id}")
-  public ResponseEntity<Void> deleteShowStatus(@PathVariable String id,
+  public ResponseEntity<Void> deleteShowStatus(@PathVariable Integer id,
       @AuthenticationPrincipal JwtUserPrincipal loginUser) {
     if (!loginUser.isAdmin() && !loginUser.isModerator()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to delete a show status");
     }
     filterService.deleteShowStatus(id);
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
+
+  /**
+   * Get all show types with pagination and filtering
+   * 
+   * @param loginUser
+   * @param name
+   * @param id
+   * @param pageable
+   * @return ResponseEntity<PagedModel<ShowTypeDto>>
+   */
+  @GetMapping("/show-types")
+  public ResponseEntity<PagedModel<ShowTypeDto>> getShowTypes(
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) String code,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+      @AuthenticationPrincipal JwtUserPrincipal loginUser) {
+    if (!loginUser.isAdmin() && !loginUser.isModerator()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to get show types");
+    }
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(new PagedModel<>(
+            filterService.findShowTypesPageable(name, code, pageable).map(showTypeMapper::toShowTypeDto)));
+  }
+
+  /**
+   * Get all show types
+   * 
+   * @return List<ShowTypeDto>
+   */
+  @GetMapping("/show-types/all")
+  public ResponseEntity<List<ShowTypeDto>> getAllShowTypes() {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(filterService.findAllShowTypes().stream()
+            .map(showTypeMapper::toShowTypeDto)
+            .collect(Collectors.toList()));
+  }
+
+  /**
+   * Create a new show type
+   * 
+   * @param showTypeDto
+   * @param loginUser
+   * @return ShowTypeDto
+   */
+  @PostMapping("/show-types")
+  public ResponseEntity<ShowTypeDto> createShowType(@RequestBody ShowTypeDto showTypeDto,
+      @AuthenticationPrincipal JwtUserPrincipal loginUser) {
+    if (!loginUser.isAdmin() && !loginUser.isModerator()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to create a show type");
+    }
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(showTypeMapper.toShowTypeDto(filterService.createShowType(showTypeMapper.toShowType(showTypeDto))));
+  }
+
+  /**
+   * Update a show type
+   * 
+   * @param id
+   * @param showTypeDto
+   * @param loginUser
+   * @return ShowTypeDto
+   */
+  @PutMapping("/show-types/{id}")
+  public ResponseEntity<ShowTypeDto> updateShowType(@PathVariable Integer id, @RequestBody ShowTypeDto showTypeDto,
+      @AuthenticationPrincipal JwtUserPrincipal loginUser) {
+    if (!loginUser.isAdmin() && !loginUser.isModerator()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to update a show type");
+    }
+    ShowType showType = filterService.findShowTypeById(id);
+    showType.setCode(showTypeDto.code());
+    showType.setName(showTypeDto.name());
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(showTypeMapper.toShowTypeDto(filterService.updateShowType(showType)));
+  }
+
+  /**
+   * Delete a show type
+   * 
+   * @param id
+   * @param loginUser
+   * @return Void
+   */
+  @DeleteMapping("/show-types/{id}")
+  public ResponseEntity<Void> deleteShowType(@PathVariable Integer id,
+      @AuthenticationPrincipal JwtUserPrincipal loginUser) {
+    if (!loginUser.isAdmin() && !loginUser.isModerator()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to delete a show type");
+    }
+    filterService.deleteShowType(id);
     return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 }

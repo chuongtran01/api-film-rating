@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Table;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
@@ -25,7 +27,11 @@ import org.springframework.data.annotation.LastModifiedDate;
 @Table(name = "genres")
 public class Genre {
   @Id
-  private String id;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
+
+  @Column(name = "code")
+  private String code;
 
   @Column(name = "name")
   private String name;

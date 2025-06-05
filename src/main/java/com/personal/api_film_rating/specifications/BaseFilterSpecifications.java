@@ -4,18 +4,18 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class BaseFilterSpecifications {
   /**
-   * Has id
+   * Has code
    * 
-   * @param <T> Entity type
-   * @param id  ID to filter by
+   * @param <T>  Entity type
+   * @param code Code to filter by
    * @return Specification<T>
    */
-  public static <T> Specification<T> hasId(String id) {
+  public static <T> Specification<T> hasId(String code) {
     return (root, query, cb) -> {
-      if (id == null) {
+      if (code == null) {
         return cb.conjunction(); // no filter
       }
-      return cb.like(root.get("id"), "%" + id + "%");
+      return cb.like(root.get("code"), "%" + code + "%");
     };
   }
 
