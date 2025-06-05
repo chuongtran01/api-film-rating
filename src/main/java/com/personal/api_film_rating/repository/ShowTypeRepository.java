@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import com.personal.api_film_rating.entity.Country;
+import com.personal.api_film_rating.entity.ShowType;
 
 @Repository
-public interface CountryRepository extends JpaRepository<Country, Integer>, JpaSpecificationExecutor<Country> {
-  Optional<Country> findByCode(String code);
+public interface ShowTypeRepository extends JpaRepository<ShowType, Integer>, JpaSpecificationExecutor<ShowType> {
+  Optional<ShowType> findByCode(String code);
 }

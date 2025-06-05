@@ -12,9 +12,29 @@ databaseChangeLog:
       relativeToChangeLogFile: true
 
   - include:
-      file: "db/filters.sql"
+      file: "db/genres.sql"
       relativeToChangeLogFile: true
 
   - include:
-      file: "db/modify-streaming-platform.sql"
+      file: "db/countries.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/languages.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/show_statuses.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/streaming_platforms.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/show_type.sql"
+      relativeToChangeLogFile: true
+
+  - include:
+      file: "db/shows.sql"
       relativeToChangeLogFile: true

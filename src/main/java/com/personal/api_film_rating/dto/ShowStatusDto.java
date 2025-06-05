@@ -3,9 +3,10 @@ package com.personal.api_film_rating.dto;
 import java.time.LocalDateTime;
 
 public record ShowStatusDto(
-        String id,
-        String name,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+                Integer id,
+                String code,
+                String name,
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt) {
 
 }
